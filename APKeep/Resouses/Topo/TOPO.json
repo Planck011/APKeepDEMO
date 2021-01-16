@@ -1,0 +1,116 @@
+[
+  {
+    "nodes" : [
+      {
+        "name" : "LSW1","model" : "S5700","Int_Type" : "GE","layer" : "access"
+      },
+      {
+        "name" : "LSW2","model" : "S5700","Int_Type" : "GE","layer" : "access"
+      },
+      {
+        "name" : "LSW3","model" : "S5700","Int_Type" : "GE","layer" : "access"
+      },
+      {
+        "name" : "CE1","model" : "CE12800","Int_Type" : "10GE","layer" : "core"
+      },
+      {
+        "name" : "CE2","model" : "CE12800","Int_Type" : "10GE","layer" : "core"
+      },
+      {
+        "name" : "server101","model" : "user"
+      },
+      {
+        "name" : "server102-1","model" : "user"
+      },
+      {
+        "name" : "server102-2","model" : "user"
+      },
+      {
+        "name" : "PC3","model" : "user"
+      },
+      {
+        "name" : "PC4","model" : "user"
+      },
+      {
+        "name" : "PC5","model" : "user"
+      },
+      {
+        "name" : "guest","model" : "user"
+      }
+    ]
+  },
+
+  {
+    "edges" : [
+      {
+        "src" : "CE1","dst" : "CE2","int" : "GE0/0/1"
+      },
+      {
+        "src" : "CE2","dst" : "CE1","int" : "GE0/0/1"
+      },
+      {
+        "src" : "CE1","dst" : "LSW1","int" : "GE0/0/2"
+      },
+      {
+        "src" : "LSW1","dst" : "CE1","int" : "GE0/0/1"
+      },
+      {
+        "src" : "CE1","dst" : "LSW2","int" : "GE0/0/3"
+      },
+      {
+        "src" : "LSW2","dst" : "CE1","int" : "GE0/0/1"
+      },
+      {
+        "src" : "CE2","dst" : "LSW3","int" : "GE0/0/2"
+      },
+      {
+        "src" : "LSW3","dst" : "CE2","int" : "GE0/0/1"
+      },
+      {
+        "src" : "LSW1","dst" : "guest","int" : "GE0/0/12"
+      },
+      {
+        "src" : "guest","dst" : "LSW1","int" : "Ethernet0/0/0"
+      },
+      {
+        "src" : "LSW1","dst" : "PC5","int" : "GE0/0/11"
+      },
+      {
+        "src" : "PC5","dst" : "LSW1","int" : "*"
+      },
+      {
+        "src" : "LSW1","dst" : "PC4","int" : "GE0/0/10"
+      },
+      {
+        "src" : "PC4","dst" : "LSW1","int" : "*"
+      },
+      {
+        "src" : "LSW2","dst" : "server102-1","int" : "GE0/0/10"
+      },
+      {
+        "src" : "server102-1","dst" : "LSW2","int" : "*"
+      },
+      {
+        "src" : "LSW2","dst" : "PC3","int" : "GE0/0/11"
+      },
+      {
+        "src" : "PC3","dst" : "LSW2","int" : "*"
+      },
+      {
+        "src" : "LSW2","dst" : "server101","int" : "GE0/0/12"
+      },
+      {
+        "src" : "server101","dst" : "LSW2","int" : "*"
+      },
+      {
+        "src" : "LSW3","dst" : "server102-2","int" : "GE0/0/11"
+      },
+      {
+        "src" : "server102-2","dst" : "LSW3","int" : "*"
+      }
+    ]
+  }
+]
+
+
+
