@@ -103,6 +103,8 @@ public class APKeep {
 	public Set<Integer> D ; //transffered predicate set
 	public Set<device> V ;
 	private static boolean traversed = false;
+	private static int loop_count ;
+	private static int hole_count ;
 	
 	public APKeep() {
 		this.bdd=new BDD(1000,100);
@@ -318,6 +320,8 @@ public class APKeep {
 		Map<Edge, Set<Integer>> A = G.A;
 		for(Integer delta:d)
 		{
+			if(por.get(delta)==null)
+				continue;
 			for(String port:por.get(delta))
 			{
 				for(device s1:devices)
@@ -336,17 +340,21 @@ public class APKeep {
 								{
 									V.add(s2);
 								}
-								Edge e1 =new Edge(s1, s2,port);
-//								Edge e2 = new Edge(s2,s1);
-								if(!E.contains(e1))
+								Edge e1 = getEdge(s1, s2, port, E);
+//								if(!E.contains(e1))//
+								if(e1==null)
 								{
-									if(A.get(e1) != null) {
-										A.get(e1).clear();
-									}
-									else {
+//									if(A.get(e1) != null) {
+//										A.get(e1).clear();
+//									}
+//									else {
+//										A.put(e1, new HashSet<>());
+//										A.get(e1).clear();
+//									}
+//									E.add(e1);
+									e1  = new Edge(s1, s2, port);
+									if(A.get(e1)==null)
 										A.put(e1, new HashSet<>());
-										A.get(e1).clear();
-									}
 									E.add(e1);
 								}
 								A.get(e1).add(delta);
@@ -356,6 +364,15 @@ public class APKeep {
 				}
 			}
 		}
+	}
+	private Edge getEdge(device s1,device s2,String port,Set<Edge> E)
+	{
+		for(Edge i:E)
+		{
+			if(i.from.name.equals(s1.name)&&i.fport.equals(port)&&i.to.name.equals(s2.name))
+				return i;
+		}
+		return null;
 	}
 	/**
 	 * traverse the graph checking invariants
@@ -370,6 +387,9 @@ public class APKeep {
 		System.out.println("\n---------------CheckingInvariants-------------");
 		for(device s:V)
 		{
+			loop_count = 0;
+			hole_count = 0;
+			System.out.println("\n------------------------------------------");
 			System.out.println("strat device:"+s.name);
 			Set<Integer> pset = new HashSet<>();
 			pset.addAll(D);
@@ -379,7 +399,7 @@ public class APKeep {
 			Traverse(s,pset,history);
 			if(traversed==false)
 				System.out.println("found blackhole by uninitialized device!please check the device:"+s.name);
-			System.out.println();
+			System.out.println("loop_count:"+loop_count+"  hole_count:"+hole_count);
 		}
 	}
 	private  void Traverse(device s,Set<Integer> pSet,Set<device> history)
@@ -389,6 +409,7 @@ public class APKeep {
 		if(history.contains(s))
 		{
 			System.out.println("\n	-->found loop!\n");
+			loop_count++;
 			return;
 		}
 		//
@@ -397,14 +418,15 @@ public class APKeep {
 			{
 				System.out.println("	checking   "+e.from.name+"-->"+e.to.name+"...");
 				traversed  = true;
-				for(Integer p:e.to.Pred.get("default"))//判断节点default端口上的谓词是否包含了这条边的谓词，如果是则出现黑洞
+				for(Integer p:e.to.ppm.Pred.get("default"))//判断节点default端口上的谓词是否包含了这条边的谓词，如果是则出现黑洞
 				{
 					for(Integer pp:G.A.get(e))
 					{
 						if(bdd.and(p, pp)!=0)//
 						{
 							System.out.println("\n-->found blackhole!");
-//							return;
+							hole_count++;
+							return;
 						}
 					}
 				}

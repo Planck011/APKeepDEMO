@@ -3,10 +3,11 @@ package parser.stanfordconfig;
 import java.util.*;
 import java.util.Map.Entry;
 
-
+import parser.topo.Topo;
 import verifier.APKeep;
 import verifier.device;
-import verifier.Rule;;
+import verifier.Rule;
+import parser.topo.Link;
 
 /**
  * @version 1.0
@@ -20,10 +21,12 @@ public class Test {
         String stanford_path = "C:\\Users\\pyh1343122828\\Desktop\\Java\\APKeep\\Resouses\\StanfordDataset";
         String file_path = stanford_path + "\\Stanford_backbone";
 //        String port_map_path = stanford_path + "\\tf_stanford_topology";
-
+        long starttime = System.currentTimeMillis();
         ConfigParse configParse = new ConfigParse(file_path);
         configParse.start();
         APKeep ap = initAPKeep(configParse);
+        initTopo(ap);
+        long parsetime = System.currentTimeMillis();
         for(device d:ap.devices)
         {
         	for(Rule ur:d.unrules)
@@ -31,12 +34,19 @@ public class Test {
         		ap.Identify(ur, d.rules);
         	}
         	Set<Integer> dd = ap.Update(d.ppm.Pred, d.ppm.Port);
+        	ap.D.addAll(dd);
         	d.sendTointerfaces(ap.bdd);
 			mapPrint(d.Pred_interface);
 			mapPrint(d.Port_interface);
 			System.out.println(dd);
+			ap.ConstructDeltaForwardingGraph(dd, d.Port_interface);
+			ap.G.printGraph();
         }
-        System.out.println();
+        long insertruletime = System.currentTimeMillis();
+        ap.getStartNodes(ap.devices);
+        ap.CheckInvariants();
+        long endtime = System.currentTimeMillis();
+        System.out.println("parse time:"+(parsetime-starttime)+"ns"+" construct time:"+(insertruletime-parsetime)+"ns"+" check time:"+(endtime-insertruletime)+"ns");
     }
     public static  <E,T> void mapPrint(Map<E, Set<T>> map) {
 		for(Entry<E, Set<T>> entry:map.entrySet())
@@ -44,6 +54,24 @@ public class Test {
 			System.out.println("key="+entry.getKey()+"  values="+entry.getValue());
 		}
 	}
+    public static void initTopo(APKeep ap) {
+    	Topo ttTopo = new Topo();
+    	Map<Integer, String> key = ttTopo.portMap.getPortmap();
+    	Map<String, Map<Integer, String>> map = ttTopo.portMap.getPortmap_map();
+    	for(Entry<Link<Integer,Integer>, Link<Integer,Integer>> entry:ttTopo.links.entrySet())
+    	{
+    		String scr_name = ttTopo.portToString(entry.getKey().src, key);
+    		String dst_name = ttTopo.portToString(entry.getKey().dst, key);
+    		device scr_d = ap.Find(scr_name, ap.devices);
+    		device dst_d = ap.Find(dst_name, ap.devices);
+    		String scr_port = map.get(scr_name).get(entry.getValue().src);
+    		String dst_port = map.get(dst_name).get(entry.getValue().dst);
+    		if(scr_port!=null)
+    			scr_d.connect.add(dst_port);
+    		if(dst_port!=null)
+    			dst_d.connect.add(scr_port);
+    	}
+    }
     public static APKeep  initAPKeep(ConfigParse configParse) {
     	APKeep ap = new APKeep();
         ArrayList<Router> routerlist = configParse.getRouterlist();
@@ -54,28 +82,32 @@ public class Test {
 //        	inter.addAll(interfaces.keySet());
         	Map<String, Set<String>> map = new HashMap<>();
         	Map<String, Set<String>> aMap = new HashMap<>();
+        	Set<String> inter = new HashSet<>();
+        	for(String i:interfaces.keySet()) {
+        		inter.add(i.concat("#").concat(name));
+        	}
         	for(Entry<String, _interface> entry:interfaces.entrySet())
         	{
-        		map.put(entry.getKey(), new HashSet<>());
+        		map.put(entry.getKey().concat("#").concat(name), new HashSet<>());
         		int flag = entry.getValue().getFlag();
         		if(flag==1)
         		{
         			if(entry.getValue().getVlan_set()!=null)
-        				map.get(entry.getKey()).addAll(entry.getValue().getVlan_set());
+        				map.get(entry.getKey().concat("#").concat(name)).addAll(entry.getValue().getVlan_set());
         		}
         		else if (flag == 2) {
         			if(entry.getValue().getVlan_acess_set()!=null)
-        				map.get(entry.getKey()).addAll(entry.getValue().getVlan_acess_set());
+        				map.get(entry.getKey().concat("#").concat(name)).addAll(entry.getValue().getVlan_acess_set());
 				}
         		else if (flag == 5) {
         			if(entry.getValue().getVlan_set()!=null)
-        				map.get(entry.getKey()).addAll(entry.getValue().getVlan_set());
+        				map.get(entry.getKey().concat("#").concat(name)).addAll(entry.getValue().getVlan_set());
         			if(entry.getValue().getVlan_acess_set()!=null)
-        				map.get(entry.getKey()).addAll(entry.getValue().getVlan_acess_set());
+        				map.get(entry.getKey().concat("#").concat(name)).addAll(entry.getValue().getVlan_acess_set());
 				}
         	}
         	Map<String, _interface> vlanrule = r.getVlanif_in_rtr();
-        	Set<String> inter = interfaces.keySet();
+        	
         	Set<String> vlans = r.getVlansetToString();
         	Set<String> acls = r.getaclsetToString();
         	device d = new device(name, inter, vlans, acls, map, aMap, ap.bdd);

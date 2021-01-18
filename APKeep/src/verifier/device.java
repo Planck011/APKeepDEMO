@@ -13,7 +13,7 @@ import jdd.bdd.BDD;
 public class device {
 	public Set<String> interfaces;//物理接口集
 	public Set<String> port_list;
-	public Set<String> connect;//拓扑相连的端口
+	public Set<String> connect = new HashSet<>();//拓扑相连的端口
 	public Map<String, Set<Integer>> Pred_interface;
 	public Map<Integer, Set<String>> Port_interface;
 	public Map<String, Set<String>> portMap;//interface->{port}

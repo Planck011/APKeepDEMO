@@ -22,6 +22,7 @@ public class Graph {
 	}
 	public void printGraph()
 	{
+		int count = 0;
 		System.out.println("----------------------DFG---------------------");
 		System.out.print("device:	");
 		for(device v:V)
@@ -29,9 +30,10 @@ public class Graph {
 		System.out.print("\nedge:");
 		for(Entry<Edge, Set<Integer>> entry:A.entrySet())
 		{
+			count++;
 			System.out.print("	("+entry.getKey().from.name+","+entry.getKey().to.name+","+entry.getKey().fport+")"+"{"+entry.getValue()+"} \n");
 		}
-		System.out.println();
+		System.out.println("count:"+count);
 	}
 	public void clear()
 	{
